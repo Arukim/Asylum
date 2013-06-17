@@ -5,13 +5,16 @@ import (
 	"net/http"
 	"html/template"
 	"asylum/asylum"
+	"fmt"
+	"math/rand"
 	)
 
 var templates = template.Must(template.ParseFiles("tmpl/mainPage.html"))
-
+var names = [...]string{"Jonn", "Piter", "Lob", "Eddie"}
+var botList = map[int] *asylum.Bot{}
 type Page struct {
 	Title string
-	Body []byte
+	BotList string
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page){
@@ -23,11 +26,27 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page){
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
 	p := &Page{Title: "Welcome"}
+	p.BotList = fmt.Sprintf("Online: %v\n", len(botList))
+	for k, _ := range botList{
+		p.BotList += fmt.Sprintf("Mister %v ", botList[k].Name)
+	}
 	renderTemplate(w, "mainPage", p)
 }
 
+func botAdd(w http.ResponseWriter, r *http.Request){
+	defer http.Redirect(w, r, "../", http.StatusFound)
+	bot := new(asylum.Bot)
+	bot.Name = names[rand.Intn(len(names))]
+	go bot.Born("hello", 1*time.Second)
+	botList[len(botList)] = bot
+}
+
+func init(){
+	rand.Seed(time.Now().UTC().UnixNano())
+}
+
 func main(){
-	go asylum.Born("Hello", 1*time.Second)
 	http.HandleFunc("/", mainPage)
+	http.HandleFunc("/addBot/", botAdd)
 	http.ListenAndServe(":8080",nil)
 }

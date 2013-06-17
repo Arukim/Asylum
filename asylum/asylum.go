@@ -5,12 +5,13 @@ import (
 	"time"
 )
 
+type Bot struct{
+	Name string
+}
 
-func Born(message string, delay time.Duration){
-	go func() {
-		for {
-			time.Sleep(delay)
-			fmt.Println(message)
-		}
-	}()
+func (bot Bot) Born(message string, delay time.Duration){
+	for {
+		time.Sleep(delay)
+		fmt.Printf("%v is alive\r\n",bot.Name)
+	}
 }

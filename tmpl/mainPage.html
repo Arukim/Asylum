@@ -4,6 +4,10 @@
   <title> {{.Title}} </title>
 </head>
 <body>
-<h1>Hello to Asylum</h1>
+<h1>Welcome to Asylum</h1>
+<div>{{printf "%s" .BotList}}</div>
+<form action="/addBot/" method="GET">
+<div><input type="submit" value="Add bot"></div>
+</form>
 </body>
 </html>
