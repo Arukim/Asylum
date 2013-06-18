@@ -5,9 +5,13 @@
 </head>
 <body>
 <h1>Welcome to Asylum</h1>
-<div>{{printf "%s" .BotList}}</div>
 <form action="/addBot/" method="GET">
 <div><input type="submit" value="Add bot"></div>
 </form>
+<div>
+{{range $bot := .BotList}} 
+  <li>{{$bot.Name}}</li>
+{{end}}
+</div>
 </body>
 </html>

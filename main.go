@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"html/template"
 	"asylum/asylum"
-	"fmt"
 	"math/rand"
 	)
 
@@ -14,7 +13,7 @@ var names = [...]string{"Jonn", "Piter", "Lob", "Eddie"}
 var botList = []*asylum.Bot{}
 type Page struct {
 	Title string
-	BotList string
+	BotList []*asylum.Bot
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page){
@@ -26,10 +25,7 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page){
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
 	p := &Page{Title: "Welcome"}
-	p.BotList = fmt.Sprintf("Online: %v\n", len(botList))
-	for _, bot := range botList{
-		p.BotList += fmt.Sprintf("Mister %v ", bot.Name)
-	}
+	p.BotList = botList
 	renderTemplate(w, "mainPage", p)
 }
 
