@@ -62,18 +62,18 @@ type Bot struct{
 	State int
 }
 var table Table
-var cards = []Card{}
+var CardsPool = []Card{}
 func init(){
 	jsonBlob, err := ioutil.ReadFile("db/cards.json")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	if err:= json.Unmarshal(jsonBlob, &cards); err != nil {
+	if err:= json.Unmarshal(jsonBlob, &CardsPool); err != nil {
 		log.Fatal(err)
 		return
 	}
-	fmt.Printf("%+v", cards)
+//	fmt.Printf("%+v", CardsPool)
 }
 
 func (bot Bot) Born(message string, delay time.Duration){

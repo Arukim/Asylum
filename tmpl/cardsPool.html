@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title> {{.Title}} </title>
+</head>
+<body>
+<a href="/mainPage/"> Main page </a>
+
+<table rules="all" border="2" cellpadding="3">
+  <tr>
+    <td> Name </td>
+    <td> Cost </td>
+    <td> Treasure </td>
+  </tr>
+{{range $card := .CardsPool}}
+  <tr>
+    <td>{{$card.Name}}</td>
+    <td>C: {{$card.Cost.Coin}} P: {{$card.Cost.Potion}}</td>
+    <td>C: {{$card.Tr.Vl.Coin}} P: {{$card.Tr.Vl.Potion}}</td>
+  </tr>
+{{end}}
+</table>
+</body>
+</html>
