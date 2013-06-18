@@ -1,4 +1,14 @@
 [
-	{"Name":"unknown"},
-	{"Name":"copper", "tr" :{"vl":{"coin" : 1}}}
+{"Name":"unknown"},
+{"Name":"unimplemented"},
+{"Name":"copper",
+	"cost":{"coin" : 0}, 
+	"tr" :{"vl":{"coin" : 1}}},
+{"Name":"silver", 
+	"cost":{"coin" : 3}, 
+	"tr" :{"vl":{"coin" : 2}}},
+{"Name":"gold","cost":{"coin" : 6}, "tr" :{"vl":{"coin" : 3}}},
+{"Name":"estate","cost":{"coin" : 2}, "vc" :{"wp": 1}},
+{"Name":"duchy","cost":{"coin" : 5}, "vc" :{"wp": 3}},
+{"Name":"province", "cost":{"coin" : 8}, "vc" :{"wp" : 6}}
 ]

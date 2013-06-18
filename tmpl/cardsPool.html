@@ -11,12 +11,14 @@
     <td> Name </td>
     <td> Cost </td>
     <td> Treasure </td>
+    <td> Victory </td>
   </tr>
 {{range $card := .CardsPool}}
   <tr>
     <td>{{$card.Name}}</td>
     <td>C: {{$card.Cost.Coin}} P: {{$card.Cost.Potion}}</td>
     <td>C: {{$card.Tr.Vl.Coin}} P: {{$card.Tr.Vl.Potion}}</td>
+    <td> {{$card.Vc.Wp}} </td>
   </tr>
 {{end}}
 </table>
