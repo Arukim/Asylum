@@ -3,6 +3,9 @@ package asylum
 import (
 	"fmt"
 	"time"
+	"encoding/json"
+	"io/ioutil"
+	"log"
 )
 
 const (
@@ -18,32 +21,33 @@ type Money struct{
 
 // Types related to cards
 type Treasure struct{
-	vl Money
+	Vl Money
 }
 
 type Action struct{
-	ap int
-	bp int
-	vl Money
-	specials []int
+	Ap int
+	Bp int
+	Vl Money
+	Specials []int
 }
 
 type Victory struct{
-	wp int
+	Wp int
 }
 
 type Card struct{
-	tr Treasure
-	ac Action
-	vc Victory
-	cost Money
-	known bool
+	Tr Treasure
+	Ac Action
+	Vc Victory
+	Cost Money
+	Known bool
+	Name string
 }
 
 type Player struct{
-	hand []Card
-	discard []Card
-	deck []Card
+	Hand []Card
+	Discard []Card
+	Deck []Card
 }
 
 
@@ -56,6 +60,20 @@ type Table struct{
 type Bot struct{
 	Name string
 	State int
+}
+var table Table
+var cards = []Card{}
+func init(){
+	jsonBlob, err := ioutil.ReadFile("db/cards.json")
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	if err:= json.Unmarshal(jsonBlob, &cards); err != nil {
+		log.Fatal(err)
+		return
+	}
+	fmt.Printf("%+v", cards)
 }
 
 func (bot Bot) Born(message string, delay time.Duration){
