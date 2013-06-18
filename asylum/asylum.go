@@ -11,6 +11,48 @@ const (
 	stateInGame = iota
 )
 
+type Money struct{
+	Coin int
+	Potion int
+}
+
+// Types related to cards
+type Treasure struct{
+	vl Money
+}
+
+type Action struct{
+	ap int
+	bp int
+	vl Money
+	specials []int
+}
+
+type Victory struct{
+	wp int
+}
+
+type Card struct{
+	tr Treasure
+	ac Action
+	vc Victory
+	cost Money
+	known bool
+}
+
+type Player struct{
+	hand []Card
+	discard []Card
+	deck []Card
+}
+
+
+// The whole game struct
+type Table struct{
+	piles [][]Card
+	players []Player
+}
+
 type Bot struct{
 	Name string
 	State int
