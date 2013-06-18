@@ -4,14 +4,28 @@
   <title> {{.Title}} </title>
 </head>
 <body>
+
 <h1>Welcome to Asylum</h1>
+
 <form action="/addBot/" method="GET">
-<div><input type="submit" value="Add bot"></div>
+  <div>
+    <input type="submit" value="Add bot">
+  </div>
 </form>
+
+<table>
+  <tr>
+    <td> Name </td>
+    <td> Status </td>
+  </tr>
 <div>
 {{range $bot := .BotList}} 
-  <li>{{$bot.Name}}</li>
+<tr>
+  <td>{{$bot.Name}}</td>
+  <td>{{$bot.State}}</td>
+</tr>
 {{end}}
 </div>
+</table>
 </body>
 </html>
