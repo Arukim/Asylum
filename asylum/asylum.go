@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"net"
 )
 
 const (
@@ -61,6 +62,14 @@ type Bot struct{
 	Name string
 	State int
 }
+
+type LoginPacket struct{
+	Name string `json:"name"`
+}
+
+type ServerInfoPacket struct{
+	Version string `json:"version"`
+}
 var table Table
 var CardsPool = []Card{}
 func init(){
@@ -76,12 +85,46 @@ func init(){
 //	fmt.Printf("%+v", CardsPool)
 }
 
+var _conn net.Conn
 func (bot Bot) Born(message string, delay time.Duration){
+	buf := make([]byte, 2048);
+	service := "192.168.1.2:6666"
 	for {
 		switch bot.State{
 		case stateOffline:
 			time.Sleep(delay)
+			conn, err := net.Dial("tcp", service)
+			if err != nil {
+				log.Println("Can't resolve server address")
+			}else{
+				_conn = conn
+				bot.State = stateConnected;
+			}
 			fmt.Printf("%v is alive\r\n",bot.Name)
+		case stateConnected:
+			var packet LoginPacket
+			packet.Name = bot.Name
+			wr, _ := json.Marshal(packet)
+			_, _ = _conn.Write([]byte(wr))
+			log.Println("Writed %v", string(wr))
+			for bot.State == stateConnected {
+				len, err := _conn.Read(buf)
+				if err != nil {
+					log.Println("Can't read %v", err)
+					bot.State = stateOffline
+				}else{
+					if len > 0 {
+						log.Println("Readed ",string( buf))
+						var serverInfo ServerInfoPacket
+						err := json.Unmarshal(buf[0:len], &serverInfo)
+						if err != nil{
+							log.Println("error:", err)
+						}else{
+							log.Println(serverInfo)
+						}
+					}
+				}
+			}
 		default:
 			time.Sleep(delay)
 		}			
