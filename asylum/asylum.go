@@ -1,7 +1,7 @@
 package asylum
 
 import (
-	"fmt"
+//	"fmt"
 	"time"
 	"encoding/json"
 	"io/ioutil"
@@ -105,26 +105,26 @@ func init(){
 func (bot Bot) Born(message string, delay time.Duration){
 	buf := make([]byte, 2048)
 //	bufPos := 0
-	service := "192.168.1.2:6666"
+	service := "192.168.1.4:6666"
 	var conn net.Conn
 	for {
 		switch bot.State{
 		case stateOffline:
-			time.Sleep(delay)
+		//	time.Sleep(delay)
 			_conn, err := net.Dial("tcp", service)
 			if err != nil {
-				log.Println("Can't resolve server address")
+				//log.Println("Can't resolve server address")
 			}else{
 				conn = _conn
 				bot.State = stateConnected;
 			}
-			fmt.Printf("%v is alive\r\n",bot.Name)
+			//fmt.Printf("%v is alive\r\n",bot.Name)
 		case stateConnected:
 			var packet LoginPacket
 			packet.Name = bot.Name
 			wr, _ := json.Marshal(packet)
 			_, _ = conn.Write([]byte(wr))
-			log.Println("Writed %v", string(wr))
+		//	log.Println("Writed %v", string(wr))
 			for bot.State == stateConnected {
 				len, err := conn.Read(buf)
 				if err != nil {
@@ -132,13 +132,13 @@ func (bot Bot) Born(message string, delay time.Duration){
 					bot.State = stateOffline
 				}else{
 					if len > 0 {
-						log.Println("Readed ",string( buf))
+					//	log.Println("Readed ",string( buf))
 						var serverInfo ServerInfoPacket
 						err := json.Unmarshal(buf[0:len], &serverInfo)
 						if err != nil{
 							log.Println("error:", err)
 						}else{
-							log.Println(serverInfo)
+					//		log.Println(serverInfo)
 							bot.State = stateInGame
 						}
 					}
@@ -151,10 +151,10 @@ func (bot Bot) Born(message string, delay time.Duration){
 			//	len, err := conn.Read(buf)
 				if err != nil {
 					errCount++
-					time.Sleep(delay)
+				//	time.Sleep(delay)
 					if errCount == 2 {
 						bot.State = stateOffline
-						log.Println("Server is dead ", err)
+					//	log.Println("Server is dead ", err)
 					}
 				}else{
 					errCount = 0
@@ -166,13 +166,30 @@ func (bot Bot) Born(message string, delay time.Duration){
 							log.Println("error:", err)
 						}else{
 						turnCount := len(turnPacket.Options)
-							log.Println(turnPacket)
+	//						log.Println(turnPacket)
 							var clientTurn ClientTurnPacket
 //leng := (turnPacket.Options)
+						choosed := -1
+						for i,option := range turnPacket.Options{
+							if option.Type == "PLAY_ALL_TREASURES" {
+								choosed = i
+							}
+							if option.Type == "BUY" && choosed == -1 {
+								if option.Target == "Estate" {
+	//								log.Println("Can buy estate!")
+									choosed = i
+								}
+							}
+						}
+
+						if(choosed == -1){
 						clientTurn.OptionNumber = rand.Intn(turnCount)
+						}else{
+							clientTurn.OptionNumber = choosed
+						}
 							wr, _ := json.Marshal(clientTurn)
 							_, _ = conn.Write([]byte(wr))
-							log.Println("Writed %v", string(wr))
+			//				log.Println("Writed %v", string(wr))
 						}
 				/*	}else{
 						errCount++
@@ -185,7 +202,7 @@ func (bot Bot) Born(message string, delay time.Duration){
 				}
 			}
 		default:
-			time.Sleep(delay)
+		//	time.Sleep(delay)
 		}			
 	}
 }
