@@ -102,16 +102,15 @@ func init(){
 }
 
 
-func (bot Bot) Born(message string, delay time.Duration){
+func (bot Bot) Born(remoteAddr string, message string, delay time.Duration){
 	buf := make([]byte, 2048)
 //	bufPos := 0
-	service := "192.168.1.4:6666"
 	var conn net.Conn
 	for {
 		switch bot.State{
 		case stateOffline:
 		//	time.Sleep(delay)
-			_conn, err := net.Dial("tcp", service)
+			_conn, err := net.Dial("tcp", remoteAddr)
 			if err != nil {
 				//log.Println("Can't resolve server address")
 			}else{
