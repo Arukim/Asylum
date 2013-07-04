@@ -2,7 +2,7 @@ package asylum
 
 import (
 //	"fmt"
-	"time"
+//	"time"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -62,6 +62,7 @@ type Table struct{
 
 type Bot struct{
 	Name string
+	GamesCount int
 	State int
 }
 
@@ -102,72 +103,64 @@ func init(){
 }
 
 
-func (bot Bot) Born(remoteAddr string, message string, delay time.Duration){
-	buf := make([]byte, 2048)
-//	bufPos := 0
+func (bot Bot) Born(remoteAddr string, name string, uplink chan Bot){
+	bot.Name = name
+	uplink <- bot
 	var conn net.Conn
 	for {
 		switch bot.State{
 		case stateOffline:
-		//	time.Sleep(delay)
-			_conn, err := net.Dial("tcp", remoteAddr)
-			if err != nil {
-				//log.Println("Can't resolve server address")
-			}else{
-				conn = _conn
-				bot.State = stateConnected;
+			uplink <- bot
+			for bot.State == stateOffline {
+				_conn, err := net.Dial("tcp", remoteAddr)
+				if err != nil {
+					//log.Println("Can't resolve server address")
+				}else{
+					conn = _conn
+					bot.State = stateConnected;
+				}
 			}
-			//fmt.Printf("%v is alive\r\n",bot.Name)
 		case stateConnected:
-			var packet LoginPacket
-			packet.Name = bot.Name
-			wr, _ := json.Marshal(packet)
-			_, _ = conn.Write([]byte(wr))
-		//	log.Println("Writed %v", string(wr))
+			uplink <- bot
 			for bot.State == stateConnected {
-				len, err := conn.Read(buf)
+				str, err := bufio.NewReader(conn).ReadString('\n')
 				if err != nil {
 					log.Println("Can't read %v", err)
 					bot.State = stateOffline
 				}else{
-					if len > 0 {
-					//	log.Println("Readed ",string( buf))
-						var serverInfo ServerInfoPacket
-						err := json.Unmarshal(buf[0:len], &serverInfo)
-						if err != nil{
-							log.Println("error:", err)
-						}else{
-					//		log.Println(serverInfo)
-							bot.State = stateInGame
-						}
+					var serverInfo ServerInfoPacket
+					err := json.Unmarshal([]byte(str), &serverInfo)
+					if err != nil{
+						log.Println("error:", err)
+						log.Println(str)
+					}else{
+						var packet LoginPacket
+						packet.Name = bot.Name
+						wr, _ := json.Marshal(packet)
+						_, _ = conn.Write([]byte(wr))
+						bot.State = stateInGame
 					}
 				}
 			}
 		case stateInGame:
-			errCount := 0
+			bot.GamesCount++
+			uplink <- bot
 			for bot.State == stateInGame {
 				str, err := bufio.NewReader(conn).ReadString('\n')
-			//	len, err := conn.Read(buf)
 				if err != nil {
-					errCount++
-				//	time.Sleep(delay)
-					if errCount == 2 {
-						bot.State = stateOffline
-					//	log.Println("Server is dead ", err)
-					}
+				//	log.Println("error:", err)
+					bot.State = stateOffline
+				//	time.Sleep(10*time.Millisecond)
+					
 				}else{
-					errCount = 0
-					//if len > 0 {
-						//log.Println("Readed ",string( buf))
-						var turnPacket ServerTurnPacket
+					var turnPacket ServerTurnPacket
 					err := json.Unmarshal([]byte(str), &turnPacket)
-						if err != nil {
-							log.Println("error:", err)
-						}else{
+					if err != nil {
+						log.Println("error:", err)
+						log.Println(str)
+					}else{
 						turnCount := len(turnPacket.Options)
-	//						log.Println(turnPacket)
-							var clientTurn ClientTurnPacket
-//leng := (turnPacket.Options)
+						var clientTurn ClientTurnPacket
 						choosed := -1
 						for i,option := range turnPacket.Options{
 							if option.Type == "PLAY_ALL_TREASURES" {
@@ -175,7 +168,6 @@ func (bot Bot) Born(remoteAddr string, message string, delay time.Duration){
 							}
 							if option.Type == "BUY" && choosed == -1 {
 								if option.Target == "Estate" {
-	//								log.Println("Can buy estate!")
 									choosed = i
 								}
 							}
@@ -188,20 +180,10 @@ func (bot Bot) Born(remoteAddr string, message string, delay time.Duration){
 						}
 							wr, _ := json.Marshal(clientTurn)
 							_, _ = conn.Write([]byte(wr))
-			//				log.Println("Writed %v", string(wr))
 						}
-				/*	}else{
-						errCount++
-						time.Sleep(delay)
-						if errCount == 5 {
-							bot.State = stateOffline
-							log.Println("Server is silent")
-						}
-					}*/
 				}
 			}
 		default:
-		//	time.Sleep(delay)
 		}			
 	}
 }

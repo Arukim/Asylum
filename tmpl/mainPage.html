@@ -19,12 +19,14 @@
   <tr>
     <td> Name </td>
     <td> Status </td>
+    <td> GamesCount </td>
   </tr>
 <div>
 {{range $bot := .BotList}} 
 <tr>
   <td>{{$bot.Name}}</td>
   <td>{{$bot.State}}</td>
+  <td>{{$bot.GamesCount}}</td>
 </tr>
 {{end}}
 </div>
