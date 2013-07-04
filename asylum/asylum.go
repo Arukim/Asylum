@@ -1,8 +1,8 @@
 package asylum
 
 import (
-//	"fmt"
-//	"time"
+	"fmt"
+	"time"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -63,6 +63,7 @@ type Table struct{
 type Bot struct{
 	Name string
 	GamesCount int
+	LastGameLength string
 	State int
 	conn net.Conn
 	remoteAddr string
@@ -163,11 +164,14 @@ func makeTurn(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket{
 
 func hBotInGame(bot* Bot){
 	bot.GamesCount++
+	gameStarted := time.Now()
 	bufRead := bufio.NewReader(bot.conn)
 	for bot.State == stateInGame {
 		str, err := bufRead.ReadString('\n')
 		if err != nil {
 			bot.State = stateOffline
+			now := time.Now()
+			bot.LastGameLength = fmt.Sprintf("%.03f s",now.Sub(gameStarted).Seconds())
 		}else{
 			var turnPacket ServerTurnPacket
 			err := json.Unmarshal([]byte(str), &turnPacket)
