@@ -70,7 +70,8 @@ type Bot struct{
 	LastGameTurnCount int
 	AvgTurnSpeed string
 	AvgGameDuration string
-	State int
+	State string
+	state int
 	buyer Buyer
 	conn net.Conn
 	remoteAddr string
@@ -168,7 +169,14 @@ func indexOf(arr []string, target string) int{
 // Init	
 var table Table
 var CardsPool = []Card{}
+var stateList map[int]string
 func init(){
+	stateList = map[int]string{
+			stateOffline:"Offline",
+			stateConnected:"Connected",
+			stateInGame:"InGame",
+	}
+
 	jsonBlob, err := ioutil.ReadFile("db/cards.json")
 	if err != nil {
 		log.Fatal(err)
@@ -199,24 +207,24 @@ func statistics(bot* Bot){
 
 // Bot state handlers
 func hBotOffline(bot* Bot){
-	for bot.State == stateOffline {
+	for bot.state == stateOffline {
 		_conn, err := net.Dial("tcp", bot.remoteAddr)
 		if err != nil {
 			//log.Println("Can't resolve server address")
 		}else{
 			bot.conn = _conn
-			bot.State = stateConnected;
+			bot.state = stateConnected;
 			statistics(bot)
 		}
 	}
 }
 
 func hBotConnected(bot* Bot){
-	for bot.State == stateConnected {
+	for bot.state == stateConnected {
 		str, err := bufio.NewReader(bot.conn).ReadString('\n')
 		if err != nil {
 			log.Println("Can't read %v", err)
-			bot.State = stateOffline
+			bot.state = stateOffline
 		}else{
 			var serverInfo ServerInfoPacket
 			err := json.Unmarshal([]byte(str), &serverInfo)
@@ -228,7 +236,7 @@ func hBotConnected(bot* Bot){
 				packet.Name = bot.Name
 				wr, _ := json.Marshal(packet)
 				_, _ = bot.conn.Write([]byte(wr))
-				bot.State = stateInGame
+				bot.state = stateInGame
 			}
 		}
 	}
@@ -238,10 +246,10 @@ func hBotInGame(bot* Bot){
 	bot.currTurnCount = 0
 	gameStarted := time.Now()
 	bufRead := bufio.NewReader(bot.conn)
-	for bot.State == stateInGame {
+	for bot.state == stateInGame {
 		str, err := bufRead.ReadString('\n')
 		if err != nil {
-			bot.State = stateOffline
+			bot.state = stateOffline
 			now := time.Now()
 			bot.lastGameDuration = now.Sub(gameStarted)
 			bot.LastGameDuration = fmt.Sprintf("%.03f s", bot.lastGameDuration.Seconds())
@@ -264,6 +272,11 @@ func hBotInGame(bot* Bot){
 	}
 }
 
+
+func updateState(bot * Bot){
+	bot.State = stateList[bot.state]
+}
+
 func generateName(bot * Bot){
 	name := guestBook[rand.Intn(len(guestBook))]
 	bot.Name = bot.buyer.GetName() + " " + name + " "  +strconv.Itoa(rand.Int() % 1000)
@@ -278,8 +291,9 @@ func (bot Bot) Born(remoteAddr string, uplink chan Bot){
 	bot.remoteAddr = remoteAddr
 	generateName(&bot)
 	for {
+		updateState(&bot)
 		uplink <- bot
-		switch bot.State{
+		switch bot.state{
 		case stateOffline:
 			hBotOffline(&bot)
 		case stateConnected:

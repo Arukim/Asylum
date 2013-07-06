@@ -5,14 +5,21 @@
     border-collapse:collapse;
     background-color: #23DE7A;
 }
-
 .MainTable tr, td, th
 {
     padding: 6px;
     border: 1px solid black;
 }
-
 .MainTable th
 {
     background-color: #07A852;
 }
+.Offline td
+{
+    background-color: #EDCCD7;
+}
+.Connected td
+{
+    background-color: #97E8BD;
+}
+

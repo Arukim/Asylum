@@ -16,6 +16,7 @@
   </div>
 </form>
 
+<div>
 <table class="MainTable">
   <tr>
     <th> Name </th>
@@ -26,9 +27,8 @@
     <th> Last Game turn count </th>
     <th> Avg Turn Speed </th>
   </tr>
-<div>
 {{range $bot := .BotList}} 
-<tr>
+<tr class="{{$bot.State}}">
   <td>{{$bot.Name}}</td>
   <td>{{$bot.State}}</td>
   <td>{{$bot.GamesCount}}</td>
@@ -38,7 +38,7 @@
   <td>{{$bot.AvgTurnSpeed}}</td>
 </tr>
 {{end}}
-</div>
 </table>
+</div>
 </body>
 </html>
