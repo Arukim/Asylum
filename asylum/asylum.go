@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-var names = [...]string{"Jonn", "Piter", "Lob", "Eddie"}
+var guestBook []string
 
 const (
 	stateOffline = iota
@@ -162,13 +162,18 @@ func init(){
 	jsonBlob, err := ioutil.ReadFile("db/cards.json")
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 	if err:= json.Unmarshal(jsonBlob, &CardsPool); err != nil {
 		log.Fatal(err)
-		return
 	}
-//	fmt.Printf("%+v", CardsPool)
+
+	jsonBlob, err = ioutil.ReadFile("db/guestbook.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err:= json.Unmarshal(jsonBlob, &guestBook); err != nil {
+		log.Fatal(jsonBlob,err)
+	}
 }
 
 func statistics(bot* Bot){
@@ -249,12 +254,14 @@ func hBotInGame(bot* Bot){
 }
 
 func generateName(bot * Bot){
-	bot.Name = bot.buyer.GetName() + " " + names[rand.Intn(len(names))] + " "  +strconv.Itoa(rand.Int() % 1000)
+	guestsCount := len(guestBook)
+	name := guestBook[rand.Intn(guestsCount)]
+	bot.Name = bot.buyer.GetName() + " " + name + " "  +strconv.Itoa(rand.Int() % 1000)
 }
 
 
 func (bot Bot) Born(remoteAddr string, uplink chan Bot){
-	if rand.Intn(10) > 8{
+	if rand.Intn(10) > 7{
 		bot.buyer = new(ChaoticBuyer)
 	}else{
 		bot.buyer = new(GreedyBuyer)
