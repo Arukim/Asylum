@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"bufio"
-//	"math/rand"
+	"math/rand"
 )
 
 const (
@@ -91,17 +91,26 @@ type ClientTurnPacket struct{
 }
 
 type Buyer interface {
-	Buy(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket
+	Buy(* Bot,* ServerTurnPacket) ClientTurnPacket
+	
 }
 
+type Chaoitic struct{
+}
 type GreedyBuyer struct{
 }
- 
-func (_ GreedyBuyer) Buy(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket{
+
+func (_ Chaoitic) Buy (bot* Bot, turnInfo* ServerTurnPacket) ClientTurnPacket{
+	var clientPacket ClientTurnPacket
+	turnCount := len(turnInfo.Options)
+	clientPacket.OptionNumber = rand.Intn(turnCount)
+	return clientPacket
+}
+func (_ GreedyBuyer) Buy(bot* Bot, turnInfo* ServerTurnPacket) ClientTurnPacket{
 	var clientPacket ClientTurnPacket
 	myTurn := 0
 TurnChoosed:
-	for i,option := range turnPacket.Options {
+	for i,option := range turnInfo.Options {
 		switch option.Type {
 		case "PLAY_ALL_TREASURES":
 			myTurn = i
@@ -114,18 +123,18 @@ TurnChoosed:
 			case "Gold":
 				myTurn = i
 				break TurnChoosed
-			case "Duchy":
-				myTurn = i
-				break TurnChoosed
+//			case "Duchy":
+//				myTurn = i
+//				break TurnChoosed
 			case "Silver":
 				myTurn = i
 				break TurnChoosed
-			case "Copper":
+/*			case "Copper":
 				myTurn = i
 				break TurnChoosed
 			case "Estate":
 				myTurn = i
-				break TurnChoosed
+				break TurnChoosed*/
 			}
 		}
 	}
@@ -181,29 +190,6 @@ func hBotConnected(bot* Bot){
 			}
 		}
 	}
-}
-
-func makeTurn(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket{
-	var clientTurn ClientTurnPacket
-/*
-	turnCount := len(turnPacket.Options)
-	choosed := -1
-	for i,option := range turnPacket.Options{
-		if option.Type == "PLAY_ALL_TREASURES" {
-			choosed = i
-		}
-		if option.Type == "BUY" && choosed == -1 {
-			if option.Target == "Estate" {
-				choosed = i
-			}
-		}
-	}
-	if(choosed == -1){
-		clientTurn.OptionNumber = rand.Intn(turnCount)
-	}else{
-		clientTurn.OptionNumber = choosed
-	}*/
-	return clientTurn
 }
 
 func hBotInGame(bot* Bot){
