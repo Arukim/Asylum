@@ -9,7 +9,10 @@ import (
 	"net"
 	"bufio"
 	"math/rand"
+	"strconv"
 )
+
+var names = [...]string{"Jonn", "Piter", "Lob", "Eddie"}
 
 const (
 	stateOffline = iota
@@ -66,7 +69,9 @@ type Bot struct{
 	LastGameDuration string
 	LastGameTurnCount int
 	AvgTurnSpeed string
+	AvgGameDuration string
 	State int
+	buyer Buyer
 	conn net.Conn
 	remoteAddr string
 	currTurnCount int
@@ -97,20 +102,32 @@ type ClientTurnPacket struct{
 }
 
 type Buyer interface {
+	GetName() string
 	Buy(* Bot,* ServerTurnPacket) ClientTurnPacket
 	
 }
 
-type Chaoitic struct{
+type ChaoticBuyer struct{
+	name string
 }
 type GreedyBuyer struct{
+	name string
 }
 
-func (_ Chaoitic) Buy (bot* Bot, turnInfo* ServerTurnPacket) ClientTurnPacket{
+func (buyer ChaoticBuyer) GetName() string{
+	return "Chaotic"
+}
+
+func (_ ChaoticBuyer) Buy (bot* Bot, turnInfo* ServerTurnPacket) ClientTurnPacket{
 	var clientPacket ClientTurnPacket
 	turnCount := len(turnInfo.Options)
 	clientPacket.OptionNumber = rand.Intn(turnCount)
 	return clientPacket
+}
+
+
+func (buyer GreedyBuyer) GetName() string{
+	return "Greedy"
 }
 func (_ GreedyBuyer) Buy(bot* Bot, turnInfo* ServerTurnPacket) ClientTurnPacket{
 	var clientPacket ClientTurnPacket
@@ -154,6 +171,17 @@ func init(){
 //	fmt.Printf("%+v", CardsPool)
 }
 
+func statistics(bot* Bot){
+	if bot.currTurnCount > 0 {
+		bot.GamesCount++
+		bot.LastGameTurnCount = bot.currTurnCount
+		bot.sumGameDuration += bot.lastGameDuration
+		bot.sumGameTurns += bot.LastGameTurnCount
+		bot.AvgTurnSpeed = fmt.Sprintf("%.03f s", bot.sumGameDuration.Seconds() / float64(bot.sumGameTurns))
+		bot.AvgGameDuration = fmt.Sprintf("%.03f s", bot.sumGameDuration.Seconds() / float64(bot.GamesCount))
+	}
+}
+
 func hBotOffline(bot* Bot){
 	for bot.State == stateOffline {
 		_conn, err := net.Dial("tcp", bot.remoteAddr)
@@ -162,12 +190,7 @@ func hBotOffline(bot* Bot){
 		}else{
 			bot.conn = _conn
 			bot.State = stateConnected;
-			if bot.currTurnCount > 0 {
-				bot.LastGameTurnCount = bot.currTurnCount
-				bot.sumGameDuration += bot.lastGameDuration
-				bot.sumGameTurns += bot.LastGameTurnCount
-				bot.AvgTurnSpeed = fmt.Sprintf("%.03f s", bot.sumGameDuration.Seconds() / float64(bot.sumGameTurns))
-			}
+			statistics(bot)
 		}
 	}
 }
@@ -196,8 +219,6 @@ func hBotConnected(bot* Bot){
 }
 
 func hBotInGame(bot* Bot){
-	bot.GamesCount++
-	var buyer Buyer = new(GreedyBuyer)
 	bot.currTurnCount = 0
 	gameStarted := time.Now()
 	bufRead := bufio.NewReader(bot.conn)
@@ -218,7 +239,7 @@ func hBotInGame(bot* Bot){
 			}else{
 				if len(turnPacket.Options) != 0 {
 					bot.currTurnCount++
-					clientTurn := buyer.Buy(bot, &turnPacket)
+					clientTurn := bot.buyer.Buy(bot, &turnPacket)
 					wr, _ := json.Marshal(clientTurn)
 					_, _ = bot.conn.Write([]byte(wr))
 				}
@@ -227,9 +248,19 @@ func hBotInGame(bot* Bot){
 	}
 }
 
-func (bot Bot) Born(remoteAddr string, name string, uplink chan Bot){
-	bot.Name = name
+func generateName(bot * Bot){
+	bot.Name = bot.buyer.GetName() + " " + names[rand.Intn(len(names))] + " "  +strconv.Itoa(rand.Int() % 1000)
+}
+
+
+func (bot Bot) Born(remoteAddr string, uplink chan Bot){
+	if rand.Intn(10) > 8{
+		bot.buyer = new(ChaoticBuyer)
+	}else{
+		bot.buyer = new(GreedyBuyer)
+	}
 	bot.remoteAddr = remoteAddr
+	generateName(&bot)
 	for {
 		uplink <- bot
 		switch bot.State{

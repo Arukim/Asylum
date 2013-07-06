@@ -6,14 +6,13 @@ import (
 	"html/template"
 	"asylum/asylum"
 	"math/rand"
-	"strconv"
 	"flag"
 	"log"
 	"strings"
 	)
 
 var templates = template.Must(template.ParseFiles("tmpl/mainPage.html", "tmpl/cardsPool.html"))
-var names = [...]string{"Jonn", "Piter", "Lob", "Eddie"}
+
 var server Server
 
 type Server struct{
@@ -30,8 +29,7 @@ type Page struct {
 
 func botAdd(){
 	bot := new(asylum.Bot)
-	name := names[rand.Intn(len(names))] + strconv.Itoa(rand.Int())
-	go bot.Born(serverAddr, name, server.Downlink)
+	go bot.Born(serverAddr, server.Downlink)
 }
 
 
@@ -103,7 +101,7 @@ func main(){
 	log.Println("Members: ", membersCount)
 
 	server.BotList = []*asylum.Bot{}
-	server.Downlink = make(chan asylum.Bot, membersCount*10)
+	server.Downlink = make(chan asylum.Bot, membersCount*2)
 	go Collect()
 	shttp.Handle("/", http.FileServer(http.Dir("./static/")))
 	http.HandleFunc("/", mainPage)
