@@ -2,6 +2,7 @@
 <html>
 <head>
   <title> {{.Title}} </title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
 
@@ -15,12 +16,14 @@
   </div>
 </form>
 
-<table>
+<table class="MainTable">
   <tr>
-    <td> Name </td>
-    <td> Status </td>
-    <td> GamesCount </td>
-    <td> Last Game, s </td>
+    <th> Name </th>
+    <th> Status </th>
+    <th> GamesCount </th>
+    <th> Last Game, s </th>
+    <th> Last Game turn count </th>
+    <th> Avg Turn Speed </th>
   </tr>
 <div>
 {{range $bot := .BotList}} 
@@ -28,7 +31,9 @@
   <td>{{$bot.Name}}</td>
   <td>{{$bot.State}}</td>
   <td>{{$bot.GamesCount}}</td>
-  <td>{{$bot.LastGameLength}}</td>
+  <td>{{$bot.LastGameDuration}}</td>
+  <td>{{$bot.LastGameTurnCount}}</td>
+  <td>{{$bot.AvgTurnSpeed}}</td>
 </tr>
 {{end}}
 </div>

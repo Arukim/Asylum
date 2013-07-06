@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"flag"
 	"log"
+	"strings"
 	)
 
 var templates = template.Must(template.ParseFiles("tmpl/mainPage.html", "tmpl/cardsPool.html"))
@@ -42,9 +43,13 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page){
 }
 
 func mainPage(w http.ResponseWriter, r *http.Request) {
-	p := &Page{Title: "Welcome"}
-	p.BotList = server.BotList
-	renderTemplate(w, "mainPage", p)
+	if strings.Contains(r.URL.Path, ".") {
+		shttp.ServeHTTP(w, r)
+	}else{
+		p := &Page{Title: "Welcome"}
+		p.BotList = server.BotList
+		renderTemplate(w, "mainPage", p)
+	}
 }
 
 func cardPool(w http.ResponseWriter, r *http.Request){
@@ -89,6 +94,8 @@ func Collect(){
 	}
 }
 
+var shttp = http.NewServeMux()
+
 func main(){
 
 	flag.Parse()
@@ -98,9 +105,11 @@ func main(){
 	server.BotList = []*asylum.Bot{}
 	server.Downlink = make(chan asylum.Bot, membersCount*10)
 	go Collect()
+	shttp.Handle("/", http.FileServer(http.Dir("./static/")))
 	http.HandleFunc("/", mainPage)
 	http.HandleFunc("/addBot/", hBotAdd)
 	http.HandleFunc("/cardsPool/", cardPool)
+
 	go spawningPool()
 	http.ListenAndServe(":8080",nil)
 

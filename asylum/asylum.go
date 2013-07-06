@@ -63,10 +63,16 @@ type Table struct{
 type Bot struct{
 	Name string
 	GamesCount int
-	LastGameLength string
+	LastGameDuration string
+	LastGameTurnCount int
+	AvgTurnSpeed string
 	State int
 	conn net.Conn
 	remoteAddr string
+	currTurnCount int
+	lastGameDuration time.Duration
+	sumGameDuration time.Duration
+	sumGameTurns int
 }
 
 type LoginPacket struct{
@@ -123,18 +129,9 @@ TurnChoosed:
 			case "Gold":
 				myTurn = i
 				break TurnChoosed
-//			case "Duchy":
-//				myTurn = i
-//				break TurnChoosed
 			case "Silver":
 				myTurn = i
 				break TurnChoosed
-/*			case "Copper":
-				myTurn = i
-				break TurnChoosed
-			case "Estate":
-				myTurn = i
-				break TurnChoosed*/
 			}
 		}
 	}
@@ -165,6 +162,12 @@ func hBotOffline(bot* Bot){
 		}else{
 			bot.conn = _conn
 			bot.State = stateConnected;
+			if bot.currTurnCount > 0 {
+				bot.LastGameTurnCount = bot.currTurnCount
+				bot.sumGameDuration += bot.lastGameDuration
+				bot.sumGameTurns += bot.LastGameTurnCount
+				bot.AvgTurnSpeed = fmt.Sprintf("%.03f s", bot.sumGameDuration.Seconds() / float64(bot.sumGameTurns))
+			}
 		}
 	}
 }
@@ -195,6 +198,7 @@ func hBotConnected(bot* Bot){
 func hBotInGame(bot* Bot){
 	bot.GamesCount++
 	var buyer Buyer = new(GreedyBuyer)
+	bot.currTurnCount = 0
 	gameStarted := time.Now()
 	bufRead := bufio.NewReader(bot.conn)
 	for bot.State == stateInGame {
@@ -202,7 +206,9 @@ func hBotInGame(bot* Bot){
 		if err != nil {
 			bot.State = stateOffline
 			now := time.Now()
-			bot.LastGameLength = fmt.Sprintf("%.03f s",now.Sub(gameStarted).Seconds())
+			bot.lastGameDuration = now.Sub(gameStarted)
+			bot.LastGameDuration = fmt.Sprintf("%.03f s", bot.lastGameDuration.Seconds())
+
 		}else{
 			var turnPacket ServerTurnPacket
 			err := json.Unmarshal([]byte(str), &turnPacket)
@@ -211,6 +217,7 @@ func hBotInGame(bot* Bot){
 				log.Println(str)
 			}else{
 				if len(turnPacket.Options) != 0 {
+					bot.currTurnCount++
 					clientTurn := buyer.Buy(bot, &turnPacket)
 					wr, _ := json.Marshal(clientTurn)
 					_, _ = bot.conn.Write([]byte(wr))
