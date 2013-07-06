@@ -78,7 +78,6 @@ func spawningPool(){
 func Collect(){
 	for {
 		botUpdate := <- server.Downlink
-	//	log.Println("Hui")
 		updated := false
 		for i, bot := range server.BotList{
 			if bot.Name == botUpdate.Name {

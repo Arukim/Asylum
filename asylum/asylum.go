@@ -101,6 +101,7 @@ type ClientTurnPacket struct{
 	OptionNumber int `json:"optionNumber"`
 }
 
+// Players Logic
 type Buyer interface {
 	GetName() string
 	Buy(* Bot,* ServerTurnPacket) ClientTurnPacket
@@ -155,7 +156,16 @@ TurnChoosed:
 	clientPacket.OptionNumber = myTurn
 	return clientPacket
 }
-	
+// Auxilary
+func indexOf(arr []string, target string) int{
+	for i, elem := range(arr){
+		if(elem == target){
+			return i
+		}
+	}
+	return -1
+}
+// Init	
 var table Table
 var CardsPool = []Card{}
 func init(){
@@ -187,6 +197,7 @@ func statistics(bot* Bot){
 	}
 }
 
+// Bot state handlers
 func hBotOffline(bot* Bot){
 	for bot.State == stateOffline {
 		_conn, err := net.Dial("tcp", bot.remoteAddr)
@@ -254,11 +265,9 @@ func hBotInGame(bot* Bot){
 }
 
 func generateName(bot * Bot){
-	guestsCount := len(guestBook)
-	name := guestBook[rand.Intn(guestsCount)]
+	name := guestBook[rand.Intn(len(guestBook))]
 	bot.Name = bot.buyer.GetName() + " " + name + " "  +strconv.Itoa(rand.Int() % 1000)
 }
-
 
 func (bot Bot) Born(remoteAddr string, uplink chan Bot){
 	if rand.Intn(10) > 7{
