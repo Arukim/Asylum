@@ -8,7 +8,7 @@ import (
 	"log"
 	"net"
 	"bufio"
-	"math/rand"
+//	"math/rand"
 )
 
 const (
@@ -79,7 +79,7 @@ type ServerInfoPacket struct{
 
 type ServerOptions struct{
 	Type string `json:"type"`
-	Target string `json:"target"`
+	Targets []string `json:"targets"`
 }
 
 type ServerTurnPacket struct{
@@ -88,6 +88,49 @@ type ServerTurnPacket struct{
 
 type ClientTurnPacket struct{
 	OptionNumber int `json:"optionNumber"`
+}
+
+type Buyer interface {
+	Buy(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket
+}
+
+type GreedyBuyer struct{
+}
+ 
+func (_ GreedyBuyer) Buy(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket{
+	var clientPacket ClientTurnPacket
+	myTurn := 0
+TurnChoosed:
+	for i,option := range turnPacket.Options {
+		switch option.Type {
+		case "PLAY_ALL_TREASURES":
+			myTurn = i
+			break TurnChoosed
+		case "BUY":
+			switch option.Targets[0] {
+			case "Province":
+				myTurn = i
+				break TurnChoosed
+			case "Gold":
+				myTurn = i
+				break TurnChoosed
+			case "Duchy":
+				myTurn = i
+				break TurnChoosed
+			case "Silver":
+				myTurn = i
+				break TurnChoosed
+			case "Copper":
+				myTurn = i
+				break TurnChoosed
+			case "Estate":
+				myTurn = i
+				break TurnChoosed
+			}
+		}
+	}
+	clientPacket.OptionNumber = myTurn
+	return clientPacket
 }
 	
 var table Table
@@ -142,6 +185,7 @@ func hBotConnected(bot* Bot){
 
 func makeTurn(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket{
 	var clientTurn ClientTurnPacket
+/*
 	turnCount := len(turnPacket.Options)
 	choosed := -1
 	for i,option := range turnPacket.Options{
@@ -158,12 +202,13 @@ func makeTurn(bot* Bot, turnPacket * ServerTurnPacket) ClientTurnPacket{
 		clientTurn.OptionNumber = rand.Intn(turnCount)
 	}else{
 		clientTurn.OptionNumber = choosed
-	}
+	}*/
 	return clientTurn
 }
 
 func hBotInGame(bot* Bot){
 	bot.GamesCount++
+	var buyer Buyer = new(GreedyBuyer)
 	gameStarted := time.Now()
 	bufRead := bufio.NewReader(bot.conn)
 	for bot.State == stateInGame {
@@ -180,7 +225,7 @@ func hBotInGame(bot* Bot){
 				log.Println(str)
 			}else{
 				if len(turnPacket.Options) != 0 {
-					clientTurn := makeTurn(bot, &turnPacket)
+					clientTurn := buyer.Buy(bot, &turnPacket)
 					wr, _ := json.Marshal(clientTurn)
 					_, _ = bot.conn.Write([]byte(wr))
 				}
