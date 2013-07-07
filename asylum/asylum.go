@@ -16,6 +16,7 @@ var guestBook []string
 
 const (
 	stateOffline = iota
+	stateServerOverflow = iota
 	stateConnected = iota
 	stateInGame = iota
 )
@@ -172,8 +173,9 @@ var CardsPool = []Card{}
 var stateList map[int]string
 func init(){
 	stateList = map[int]string{
-			stateOffline:"Offline",
+			stateOffline:"ServerOffline",
 			stateConnected:"Connected",
+			stateServerOverflow:"ServerOverflow",
 			stateInGame:"InGame",
 	}
 
@@ -202,6 +204,7 @@ func statistics(bot* Bot){
 		bot.sumGameTurns += bot.LastGameTurnCount
 		bot.AvgTurnSpeed = fmt.Sprintf("%.03f s", bot.sumGameDuration.Seconds() / float64(bot.sumGameTurns))
 		bot.AvgGameDuration = fmt.Sprintf("%.03f s", bot.sumGameDuration.Seconds() / float64(bot.GamesCount))
+		bot.currTurnCount = 0
 	}
 }
 
@@ -210,6 +213,7 @@ func hBotOffline(bot* Bot){
 	for bot.state == stateOffline {
 		_conn, err := net.Dial("tcp", bot.remoteAddr)
 		if err != nil {
+			time.Sleep(1 * time.Second)
 			//log.Println("Can't resolve server address")
 		}else{
 			bot.conn = _conn
@@ -224,7 +228,7 @@ func hBotConnected(bot* Bot){
 		str, err := bufio.NewReader(bot.conn).ReadString('\n')
 		if err != nil {
 			log.Println("Can't read %v", err)
-			bot.state = stateOffline
+			bot.state = stateServerOverflow
 		}else{
 			var serverInfo ServerInfoPacket
 			err := json.Unmarshal([]byte(str), &serverInfo)
@@ -300,6 +304,9 @@ func (bot Bot) Born(remoteAddr string, uplink chan Bot){
 			hBotConnected(&bot)
 		case stateInGame:
 			hBotInGame(&bot)
+		case stateServerOverflow:
+			time.Sleep(1 * time.Second)
+			bot.state = stateOffline
 		default:
 			panic("Unknown state!");
 		}			

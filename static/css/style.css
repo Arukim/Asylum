@@ -1,20 +1,21 @@
 
 .MainTable 
 {
+    font-size: small;
     border: 0px;
     border-collapse:collapse;
     background-color: #23DE7A;
 }
 .MainTable tr, td, th
 {
-    padding: 6px;
+    padding: 4px;
     border: 1px solid black;
 }
 .MainTable th
 {
     background-color: #07A852;
 }
-.Offline td
+.ServerOffline td
 {
     background-color: #EDCCD7;
 }
@@ -22,4 +23,7 @@
 {
     background-color: #97E8BD;
 }
-
+.ServerOverflow td
+{
+    background-color: #E8AEC1;
+}
