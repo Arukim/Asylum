@@ -96,8 +96,36 @@ type ServerOptions struct{
 }
 
 type ServerTurnPacket struct{
-	Options []ServerOptions `json:"options"`
+	Piles [] ServerPile `json:"piles"`
+	TurnStats ServerTurnStats `json:"turnStats"`
+	Options [] ServerOptions `json:"options"`
+	Players [] ServerPlayer `json:"players"`
+	LastEvent ServerOptions `json:"lastEvent"`
+	LastEventPlayer string `json:"lastEventPlayer"`
 }
+
+type ServerPlayer struct{
+	Hand [] string `json:"hand"`
+	Name string `json:"name"`
+	TopDiscard string `json:"topDiscardCardName"`
+	DeckSize int `json:"nofCardsInDeck"`
+}
+
+type ServerPile struct{
+	TopCardName string `json:"topCardName"`
+	PrototypeName string `json:"prototypeName"`
+	Cards int `json:"nofCards"`
+}
+type ServerTurnStats struct{
+	ActivePlayerName string `json:"activePlayerName"`
+	TurnNumber int `json:"turnNumber"`
+	Play [] string `json:"play"`
+	Actions int `json:"nofActions"`
+	Buys int `"nofBuys"`
+	Coins int `"nofCoins"`
+	Potions int `"nofPotions"`
+}
+
 
 type ClientTurnPacket struct{
 	OptionNumber int `json:"optionNumber"`
@@ -260,7 +288,7 @@ func hBotInGame(bot* Bot){
 
 		}else{
 			var turnPacket ServerTurnPacket
-			err := json.Unmarshal([]byte(str), &turnPacket)
+			err = json.Unmarshal([]byte(str), &turnPacket)
 			if err != nil {
 				log.Println("error:", err)
 				log.Println(str)
