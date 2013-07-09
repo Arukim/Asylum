@@ -10,6 +10,8 @@ import (
 	"bufio"
 	"math/rand"
 	"strconv"
+	"database/sql"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var guestBook []string
@@ -82,6 +84,7 @@ type Bot struct{
 	sumGameTurns int
 }
 
+//Communication with server
 type LoginPacket struct{
 	Name string `json:"name"`
 }
@@ -126,6 +129,16 @@ type ServerTurnStats struct{
 	Potions int `"nofPotions"`
 }
 
+type ServerFinalCard struct{
+	Card string `json:"card"`
+	Count int `json:"count"`
+}
+type ServerFinalGameStats struct{
+	Name string `json:"name"`
+	Points int `json:"nofVictoryPoints"`
+	State string `json:"state"`
+	Cards ServerFinalCard `json:"cards"`
+}
 
 type ClientTurnPacket struct{
 	OptionNumber int `json:"optionNumber"`
@@ -200,6 +213,17 @@ var table Table
 var CardsPool = []Card{}
 var stateList map[int]string
 func init(){
+	db, err := sql.Open("sqlite3", "db/log.sqlite3")
+	if err != nil {
+		log.Println("DB open err", err)
+	}else{
+		defer db.Close()
+	}
+	err = db.Ping()
+	if err != nil {
+		log.Println("Can't ping DB")
+	}
+
 	stateList = map[int]string{
 			stateOffline:"ServerOffline",
 			stateConnected:"Connected",
@@ -298,6 +322,14 @@ func hBotInGame(bot* Bot){
 					clientTurn := bot.buyer.Buy(bot, &turnPacket)
 					wr, _ := json.Marshal(clientTurn)
 					_, _ = bot.conn.Write([]byte(wr))
+				}
+			}
+			var finalStats []ServerFinalGameStats
+			err = json.Unmarshal([]byte(str), &finalStats)
+			if err != nil {
+			}else{
+				if len(finalStats) > 0 {
+					log.Println("Final stats:", finalStats)
 				}
 			}
 		}
